@@ -1,26 +1,28 @@
-import debounce from 'lodash.debounce';
+import {debounce} from "lodash";
 
-type StreamEvent = {
+export type StreamEvent = {
   timestamp: number;
   message: string;
 }
 export class OrderedStreamWriter {
-  events: StreamEvent[] = [];
+  receivedEvents: StreamEvent[] = [];
+  orderedEvents: StreamEvent[] = [];
   cursor: number = 0;
   constructor() {
-    this.events = [];
   }
+
   write(event: StreamEvent) {
-    this.events.push(event);
-    this.logEvents();
+    this.receivedEvents.push(event);
+    this.logEvents()
   }
 
   logEvents = debounce(() => {
-    this.events
+    const ordered = this.receivedEvents
+      .slice(this.cursor, this.receivedEvents.length)
       .sort((a, b) => a.timestamp - b.timestamp)
-      .slice(this.cursor, this.events.length)
-      .map(e => e.message)
-      .map(console.log)
-    this.cursor = this.events.length;
-  }, 100, { maxWait: 1000 });
+
+    ordered.forEach(event => { console.log(event.message) });
+    this.orderedEvents = this.orderedEvents.concat(ordered);
+    this.cursor = this.receivedEvents.length;
+  }, 100, { maxWait: 1000 })
 }
