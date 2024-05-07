@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "jest": "^29.7.0",
+    "lodash": "^4.17.21",
     "ts-jest": "^29.1.2",
     "typescript": "^5.4.5"
   },
@@ -19,6 +20,7 @@
     "@babel/preset-typescript": "^7.24.1",
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.12",
+    "@types/lodash": "^4.17.1",
     "babel-jest": "^29.7.0"
   }
 }
