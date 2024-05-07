@@ -1,19 +1,35 @@
 import {Desk, Client, CoworkingSpace, Whiteboard, MeetingRoom} from "./coworking";
 
+function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+async function withLatency(object: Record<string, any>, method: string, params: any): Promise<void> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      try {
+        resolve(object[method](params));
+      } catch (e: unknown) {
+        reject(e);
+      }
+    }, randomInt(0, 100));
+  });
+}
+
 describe('Concurrent Coworking', () => {
   describe('Desk - mutex', () => {
-    it('should only allow one client to utilize it at a time', () => {
+    it('should only allow one client to utilize it at a time', async () => {
       const desk = new Desk({ type: 'sit-stand' });
       const garrett = new Client({ name: 'Garrett' });
       const daniel = new Client({ name: 'Daniel' });
 
-      desk.assignTo(garrett);
-      expect(() => desk.assignTo(daniel)).toThrowError('Desk is currently in use');
+      await withLatency(desk, 'assignTo', garrett);
+      expect(withLatency(desk, 'assignTo', daniel)).rejects.toThrowError('Desk is currently in use');
     })
   });
 
   describe('Coworking Space - semaphore', () => {
-    it('should only allow a new client in if there are enough desks available', () => {
+    it('should only allow a new client in if there are enough desks available', async () => {
       const desk1 = new Desk({ type: 'sit-stand' });
       const desk2 = new Desk({ type: 'sit-stand' });
       const garrett = new Client({ name: 'Garrett' });
@@ -21,10 +37,10 @@ describe('Concurrent Coworking', () => {
       const marcus = new Client({ name: 'Marcus' });
 
       const space = new CoworkingSpace({ desks: [desk1, desk2], whiteboards: [] });
-      space.allowEntry(garrett);
-      space.allowEntry(daniel);
+      await withLatency(space,'allowEntry', garrett);
+      await withLatency(space,'allowEntry', daniel);
 
-      expect(() => space.allowEntry(marcus)).toThrowError('No desks available');
+      expect(withLatency(space, 'allowEntry', marcus)).rejects.toThrowError('No desks available');
     })
 
     it('should allow clients to wait until there are enough desks available', () => {
